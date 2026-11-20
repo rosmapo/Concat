@@ -570,6 +570,39 @@ impl Studio {
         }
     }
 
+    /// The cuts between the selected pictures: where one selected picture
+    /// ends and the next selected one on its lane begins, as the time of the
+    /// cut and how long a transition there may be - the usual length, or
+    /// less where a neighbour is too short to hold half of it. In time
+    /// order; empty when the selection has no two pictures that meet.
+    fn selected_cuts(&self) -> Vec<(f64, f64)> {
+        let mut picked: Vec<&Clip> = self
+            .selection
+            .iter()
+            .filter_map(|id| self.clip(id))
+            .filter(|clip| clip.kind.is_visual())
+            .collect();
+        picked.sort_by(|a, b| {
+            a.track_id
+                .cmp(&b.track_id)
+                .then(a.start.total_cmp(&b.start))
+        });
+        let mut cuts: Vec<(f64, f64)> = picked
+            .windows(2)
+            .filter(|pair| {
+                pair[0].track_id == pair[1].track_id
+                    && (pair[0].start + pair[0].duration - pair[1].start).abs() < 1e-3
+            })
+            .map(|pair| {
+                let room = pair[0].duration.min(pair[1].duration);
+                let duration = f64::from(TRANSITION_DURATION).min(room);
+                (pair[1].start, duration.max(model::ranges::MIN_TRANSITION))
+            })
+            .collect();
+        cuts.sort_by(|a, b| a.0.total_cmp(&b.0));
+        cuts
+    }
+
     /// Places the catalogue transition `id` as a clip of its own (#621):
     /// centred on the cut the selection names (see
     /// [`Studio::transition_cut`]), or, with no cut selected, at the
@@ -580,6 +613,26 @@ impl Studio {
             .get(id)
             .map(|package| package.manifest.effect.name.clone())
             .unwrap_or_default();
+        // Several clips selected: a transition on every cut between them,
+        // as one edit - what a slideshow of many pictures asks for - the
+        // way an entrance or a loop goes on every selected clip at once.
+        let cuts = self.selected_cuts();
+        if self.selection.len() > 2 && !cuts.is_empty() {
+            let commands = cuts
+                .into_iter()
+                .map(|(at, duration)| Command::AddTransitionClip {
+                    track_id: None,
+                    start: (at - duration / 2.0).max(0.0),
+                    duration: Some(duration),
+                    transition_id: id.to_owned(),
+                    name: label.clone(),
+                })
+                .collect();
+            if let Some(created) = self.apply(Command::Batch { commands }) {
+                self.selection = vec![created];
+            }
+            return;
+        }
         let duration = f64::from(TRANSITION_DURATION);
         let at = match self.transition_cut() {
             Ok(clip_id) => match self.clip(&clip_id) {
