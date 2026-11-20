@@ -29,8 +29,36 @@ mod tracks;
 
 /// Fallback length for media whose container reports no duration.
 const UNKNOWN_DURATION: f64 = 5.0;
-/// How long a still lasts when first placed. Editorial default, not a fact.
-const DEFAULT_IMAGE_DURATION: f64 = 5.0;
+/// How long a still lasts when first placed, until the window says otherwise
+/// (see [`set_image_duration`]). Editorial default, not a fact.
+pub const DEFAULT_IMAGE_DURATION: f64 = 5.0;
+/// The longest a still may be asked to last when first placed, in seconds.
+pub const MAX_IMAGE_DURATION: f64 = 3600.0;
+
+/// How long a still lasts when first placed, as the person set it. A
+/// process-wide setting, like the hardware-decode switch: it is a preference
+/// of the window, not part of any document, so it rides beside the commands
+/// instead of inside every one of them.
+static IMAGE_DURATION: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(DEFAULT_IMAGE_DURATION.to_bits());
+
+/// Sets how long a still lasts when first placed, in seconds. Held to what a
+/// clip can be (see [`MIN_CLIP_DURATION`]) and to [`MAX_IMAGE_DURATION`]; a
+/// number that is not finite is the default. Clips already on a timeline keep
+/// the length they have.
+pub fn set_image_duration(seconds: f64) {
+    let seconds = if seconds.is_finite() {
+        seconds.clamp(MIN_CLIP_DURATION, MAX_IMAGE_DURATION)
+    } else {
+        DEFAULT_IMAGE_DURATION
+    };
+    IMAGE_DURATION.store(seconds.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+/// How long a still lasts when first placed, in seconds.
+pub fn image_duration() -> f64 {
+    f64::from_bits(IMAGE_DURATION.load(std::sync::atomic::Ordering::Relaxed))
+}
 /// How long a title lasts when first placed.
 const DEFAULT_TEXT_DURATION: f64 = 4.0;
 /// How long a layer covers when first placed. Editorial default, not a fact.
@@ -312,7 +340,8 @@ pub enum Command {
         commands: Vec<Command>,
     },
     /// Places a clip of `media_id` on a named track, minting a "c" id.
-    /// Duration comes from the media (five seconds for a still or unknown
+    /// Duration comes from the media (the still length set in Settings,
+    /// five seconds by default, for a still; five seconds for unknown
     /// length); errs if the media or track no longer exists.
     AddClip {
         /// The bin item to cut from.

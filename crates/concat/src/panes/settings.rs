@@ -58,6 +58,9 @@ pub enum SettingsMsg {
     PlayheadStopsChanged(bool),
     /// The proxies switch: whether large files get a smaller copy to play.
     ProxiesChanged(bool),
+    /// The image duration field: how many seconds a picture lasts when it is
+    /// first placed on the timeline.
+    ImageDurationChanged(f32),
     /// The remember-layout switch: whether a launch opens on the last
     /// session's panels and window size.
     RememberLayoutChanged(bool),
@@ -285,6 +288,7 @@ impl SettingsPane {
                     })
                     .unwrap_or(0);
                 self.playhead_stops = studio.prefs.playhead_stops_at_end;
+                concat_project::commands::set_image_duration(studio.prefs.image_seconds());
                 // Not a choice: the app decodes on whatever hardware the
                 // platform has, and a file the hardware will not take opens
                 // in software (concat_media::hardware). Linux has no default
@@ -397,6 +401,19 @@ impl SettingsPane {
                 // On, the media already in the project gets its proxies
                 // straight away (refresh_art's stamp holds the switch);
                 // off, playback reads the files from the next frame.
+            }
+            SettingsMsg::ImageDurationChanged(seconds) => {
+                // Each commit of the field lands here; a number that is not
+                // one a picture can last is held to the nearest that is.
+                let seconds = f64::from(seconds);
+                studio.prefs.image_duration = Some(seconds);
+                let seconds = studio.prefs.image_seconds();
+                log::info!("settings: Image duration {seconds} s");
+                studio.prefs.image_duration = Some(seconds);
+                studio.prefs.save(&studio.host.dirs);
+                // Pictures placed from now on; the ones already on the
+                // timeline keep the length they have.
+                concat_project::commands::set_image_duration(seconds);
             }
             SettingsMsg::RememberLayoutChanged(on) => {
                 log::info!("settings: Remember layout {}", on_off(on));
@@ -1025,6 +1042,7 @@ impl SettingsPane {
                 .unwrap_or(2) as i32,
             playhead_stops: self.playhead_stops,
             proxies: studio.prefs.proxies,
+            image_duration: studio.prefs.image_seconds() as f32,
             remember_layout: studio.prefs.remembers_layout(),
             layout_switchable: !crate::platform::phone(),
             gpu: !studio.prefs.draws_in_software(),

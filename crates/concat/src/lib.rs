@@ -2355,6 +2355,9 @@ fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint:
     app.on_settings_proxies_changed(on_window!(|state, on: bool| {
         state.handle(Msg::Settings(SettingsMsg::ProxiesChanged(on)));
     }));
+    app.on_settings_image_duration_changed(on_window!(|state, seconds: f32| {
+        state.handle(Msg::Settings(SettingsMsg::ImageDurationChanged(seconds)));
+    }));
     app.on_settings_remember_layout_changed(on_window!(|state, on: bool| {
         state.handle(Msg::Settings(SettingsMsg::RememberLayoutChanged(on)));
     }));

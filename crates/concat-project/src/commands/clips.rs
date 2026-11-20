@@ -1009,7 +1009,7 @@ fn ripple_room_for(timeline: &mut Timeline, track_id: &str, start: f64, media: &
 /// file's own length.
 fn clip_length(media: &MediaItem) -> f64 {
     match media.kind {
-        MediaKind::Image => DEFAULT_IMAGE_DURATION,
+        MediaKind::Image => image_duration(),
         _ => media.duration.unwrap_or(UNKNOWN_DURATION),
     }
 }

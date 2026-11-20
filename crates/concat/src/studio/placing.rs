@@ -25,10 +25,11 @@ impl Studio {
                     label: item.name.clone(),
                     media: item.id.clone(),
                     start: 0.0,
-                    // A still has no length of its own; a file with no stated
-                    // duration gets the engine's own fallback.
+                    // A still has no length of its own: it gets the one set
+                    // in Settings. A file with no stated duration gets the
+                    // engine's own fallback.
                     duration: if item.kind == model::MediaKind::Image {
-                        LAYER_DURATION
+                        concat_project::commands::image_duration() as f32
                     } else {
                         item.duration.unwrap_or(5.0) as f32
                     }

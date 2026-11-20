@@ -77,6 +77,8 @@ export struct SettingsData {
     playhead-stops: bool,
     /// large files get a smaller copy for playback
     proxies: bool,
+    /// how long a picture lasts when it is first placed, in seconds
+    image-duration: float,
     /// a launch opens with the panels and the window where the last
     /// session left them
     remember-layout: bool,
@@ -678,6 +680,7 @@ export component SettingsDialog inherits Sheet {
     callback scale-changed(index: int);
     callback playhead-stops-changed(on: bool);
     callback proxies-changed(on: bool);
+    callback image-duration-changed(seconds: float);
     callback remember-layout-changed(on: bool);
     callback gpu-changed(on: bool);
     callback magnetic-changed(on: bool);
@@ -1016,6 +1019,26 @@ export component SettingsDialog inherits Sheet {
                     on: root.data.playhead-stops;
                     open: false;
                     switched(on) => { root.playhead-stops-changed(on); }
+                }
+
+                // How long a picture lasts when it is placed on the
+                // timeline. The ones already there keep their length.
+                DialogSection {
+                    ruled: false;
+                    title: I18n.t("settings.imageDuration");
+                    hint: I18n.t("settings.imageDurationHint");
+
+                    NumberField {
+                        horizontal-stretch: 0;
+                        width: 96px;
+                        value: root.data.image-duration;
+                        minimum: 0.1;
+                        maximum: 3600;
+                        step: 0.5;
+                        precision: 1;
+                        suffix: " s";
+                        changed(seconds) => { root.image-duration-changed(seconds); }
+                    }
                 }
 
                 // Off, playback reads the files themselves. On, a file

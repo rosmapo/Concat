@@ -553,6 +553,8 @@
   "settings.gpu": "Draw on the GPU",
   "settings.gpuHint": "Off, the window and the preview draw in software: slower, but out of the way of a graphics driver that closes Concat. It turns off by itself if Concat closes while starting, until Concat's next update. Takes effect the next time Concat starts.",
   "settings.hideTheToken": "Hide the token",
+  "settings.imageDuration": "Image duration",
+  "settings.imageDurationHint": "How many seconds a picture lasts on the timeline when you place it. Pictures already on the timeline keep their length; trim them as usual.",
   "settings.inUse": "In use",
   "settings.install": "Install",
   "settings.installedMbOnDisk": "{0} installed · {1} MB on disk",

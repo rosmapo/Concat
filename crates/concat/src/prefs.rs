@@ -206,6 +206,10 @@ pub struct Preferences {
     pub remember_layout: Option<bool>,
     /// The arrangement that is remembered, while the switch is on.
     pub layout: Option<SavedLayout>,
+    /// How long a picture lasts on the timeline when it is first placed, in
+    /// seconds: Settings > General's "Image duration". `None` is five
+    /// seconds; read it through [`Preferences::image_seconds`].
+    pub image_duration: Option<f64>,
     /// Rebound shortcuts, by action id: the chord each was given, or ""
     /// for an action a rebind left with none. Absent is the shipped
     /// chord — the file holds what moved, not the whole table. Written
@@ -400,6 +404,16 @@ impl Preferences {
     /// which closes every lane.
     pub fn magnetic(&self) -> bool {
         self.magnetic || (crate::platform::phone() && !self.magnetic_chosen)
+    }
+
+    /// How long a picture lasts when first placed, in seconds: the
+    /// remembered length held to what a clip can be, or the default.
+    pub fn image_seconds(&self) -> f64 {
+        self.image_duration
+            .filter(|seconds| seconds.is_finite())
+            .map_or(concat_project::commands::DEFAULT_IMAGE_DURATION, |seconds| {
+                seconds.clamp(0.1, concat_project::commands::MAX_IMAGE_DURATION)
+            })
     }
 
     /// Whether a launch opens on the last session's layout.
