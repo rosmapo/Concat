@@ -1,0 +1,32 @@
+format = 2
+
+[effect]
+id = "concat.page-turn"
+name = "Page Turn"
+kind = "transition"
+category = "Slide"
+order = 18
+aliases = ["page", "page-curl", "book"]
+description = "The last shot is a sheet peeled back from a corner like the page of a book, its reverse showing the picture faintly through the paper and a soft shadow on the next shot beneath."
+
+[[param]]
+key = "corner"
+label = "Corner"
+type = "enum"
+values = [0, 1, 2, 3]
+labels = ["Bottom right", "Top right", "Bottom left", "Top left"]
+default = 0
+min = 0
+max = 3
+
+[[param]]
+key = "curl"
+label = "Curl"
+min = 0.05
+max = 0.25
+step = 0.01
+default = 0.12
+
+[transition]
+fallback = "cross-fade"
+entry = "effect.wgsl"

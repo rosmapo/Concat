@@ -1,0 +1,54 @@
+# Colours in the working space: linear light, 1.0 the white of an SDR
+# picture. A cut from one colour to another, and its middle pixel.
+
+# Before the peel starts the shot is untouched.
+[[probe]]
+name = "start"
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 0.0
+expect = [0.8, 0.5, 0.3, 1]
+
+# Late in the peel the sheet has all but gone and the middle of the frame
+# shows the next shot.
+[[probe]]
+name = "default"
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 0.85
+expect = [0.04994, 0.14982, 0.39952, 1]
+
+[[probe]]
+name = "minimum"
+at = "min"
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 0.9
+expect = [0.05, 0.15, 0.4, 1]
+
+[[probe]]
+name = "maximum"
+at = "max"
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 1.0
+expect = [0.04972, 0.14916, 0.39776, 1]
+tolerance = 0.01
+
+# From the bottom left, part-way: the middle of the frame is under the
+# sheet turned back over itself, the picture faint through pale paper.
+[[probe]]
+name = "reverse"
+params = { corner = 2, curl = 0.05 }
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 0.4
+expect = [0.8375, 0.6125, 0.4625, 1]
+
+# At the end it is the next shot.
+[[probe]]
+name = "end"
+input = [0.8, 0.5, 0.3, 1]
+to = [0.05, 0.15, 0.4, 1]
+progress = 1.0
+expect = [0.04999, 0.14998, 0.39994, 1]
