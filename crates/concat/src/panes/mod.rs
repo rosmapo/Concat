@@ -87,7 +87,7 @@ pub fn activity(msg: &Msg) -> Option<Activity> {
         | Msg::Export(ExportMsg::Progress { .. })
         | Msg::Captions(CaptionsMsg::Progress(_))
         | Msg::Speech(SpeechMsg::Progress(_))
-        | Msg::Settings(SettingsMsg::ModelProgress { .. } | SettingsMsg::InstallProgress { .. }) => {
+        | Msg::Settings(SettingsMsg::ModelProgress { .. }) => {
             return None;
         }
         // A wheel tick that zooms by nothing - a trackpad's idle events -
