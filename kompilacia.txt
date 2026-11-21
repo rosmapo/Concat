@@ -1,0 +1,11 @@
+### rýchle skúšanie, debug	Rýchla kompilácia, ale pomalé prehrávanie videa.
+cargo run -p concat
+
+### skúšanie zmien	Optimalizované, prebuild trvá sekundy (krátko ho v texte nazývajú aj cargo dev).
+cargo run --profile quick -p concat
+
+### bežný optimalizovaný build	Thin LTO, jedna jednotka kódu, ale okno (crate concat) sa kompiluje po častiach.
+cargo build --release -p concat
+
+### finálna binárka	Fat LTO, panic=abort, stripped, najrýchlejšia, ale kompilácia najdlhšia.
+cargo build --profile app -p concat
