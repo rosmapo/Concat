@@ -1,77 +1,100 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Concat contributors
 
-// Page Turn: the outgoing shot is a sheet of paper rolled up from one edge
-// round a cylinder, as a page of a book is lifted and turned. Past the roll
-// the sheet lies back on itself, showing its reverse with the print faint
-// through the paper, and the shot that follows waits beneath it, shaded
-// where the sheet hangs over it.
+// Page Turn: the outgoing shot is a sheet of paper peeled back from one
+// corner, rolled up round a cylinder as the page of a book is lifted. Past
+// the roll the sheet lies back over itself, showing its reverse with the
+// picture faintly through the paper, and the shot that follows waits
+// beneath it, shaded where the sheet hangs over it.
 //
-// The page is laid out along x, which is the frame's width for a turn from
-// the right and its mirror for a turn from the left. The roll's axis sits at
-// `c` and its radius is `curl`; `c` runs from the far edge to clear of the
-// near one, so the whole sheet has gone by the end.
+// Everything is worked in pixels in a frame flipped so that the corner the
+// peel starts from is the far one, (size.x, size.y). The sheet is measured
+// along DIR, the way the peel travels, and across it along NRM. The axis
+// of the roll sits at `c` along DIR, and runs from the far corner at the
+// start to clear of the near one, roll and all, at the end.
 
 const PI: f32 = 3.14159265;
 
-struct Params { direction: f32, curl: f32 }
+// The way the peel travels, 30 degrees up from the horizontal, and across it.
+const DIR: vec2<f32> = vec2<f32>(0.8660254, 0.5);
+const NRM: vec2<f32> = vec2<f32>(-0.5, 0.8660254);
 
-// A point of the sheet, `s` along it and `v` up it, as a place in the frame.
-fn on_frame(s: f32, v: f32, mirrored: bool) -> vec2<f32> {
-    return vec2<f32>(select(s, 1.0 - s, mirrored), v);
+struct Params { corner: f32, curl: f32 }
+
+// A point of the frame, flipped to put the peel's corner far, or back.
+fn flip_uv(u: vec2<f32>, flip_x: bool, flip_y: bool) -> vec2<f32> {
+    return vec2<f32>(select(u.x, 1.0 - u.x, flip_x), select(u.y, 1.0 - u.y, flip_y));
 }
 
-// The reverse of the sheet: its own print through pale paper, lit by `shade`.
+// Whether a point, in pixels, is on the sheet.
+fn on_page(q: vec2<f32>, size: vec2<f32>) -> bool {
+    return q.x >= 0.0 && q.y >= 0.0 && q.x <= size.x && q.y <= size.y;
+}
+
+// 1 where the sheet folded back over itself covers the point at `t` along
+// DIR and `w` across it, else 0.
+fn hangs(t: f32, w: f32, c: f32, r: f32, size: vec2<f32>) -> f32 {
+    if (t > c) {
+        return 0.0;
+    }
+    let q = DIR * (2.0 * c + PI * r - t) + NRM * w;
+    return select(0.0, 1.0, on_page(q, size));
+}
+
+// The reverse of the sheet: the picture through pale paper, lit by `shade`.
 fn reverse(print: vec4<f32>, shade: f32) -> vec4<f32> {
-    let paper = mix(print.rgb, vec3<f32>(0.9, 0.9, 0.9), 0.7);
+    let paper = mix(print.rgb, vec3<f32>(0.95, 0.95, 0.95), 0.25);
     return vec4<f32>(paper * shade, print.a);
 }
 
 fn transition(uv: vec2<f32>, progress: f32) -> vec4<f32> {
     let p = clamp(progress, 0.0, 1.0);
-    let r = clamp(params.curl, 0.02, 0.5);
-    let mirrored = params.direction > 0.5;
-    let x = select(uv.x, 1.0 - uv.x, mirrored);
-    let v = uv.y;
-    // The axis of the roll: at the far edge at the start, gone past the near
-    // edge, roll and all, at the end.
-    let c = 1.0 - p * (1.0 + 2.0 * r);
+    let size = frame.size;
+    let corner = i32(round(clamp(params.corner, 0.0, 3.0)));
+    let flip_x = corner >= 2;
+    let flip_y = corner == 1 || corner == 3;
+    let pos = flip_uv(uv, flip_x, flip_y) * size;
+    let r = clamp(params.curl, 0.02, 0.5) * size.y;
+    let t = dot(pos, DIR);
+    let w = dot(pos, NRM);
+    let far = dot(size, DIR);
+    let c = far - p * (far + 2.0 * r);
 
-    // Behind the roll, the sheet lies back over itself, reverse side up.
-    if (x <= c) {
-        let s = 2.0 * c + PI * r - x;
-        if (s <= 1.0) {
-            return reverse(from_at(on_frame(s, v, mirrored)), 1.0);
+    // Behind the roll the sheet lies back over itself, reverse side up.
+    if (t <= c) {
+        let s = 2.0 * c + PI * r - t;
+        let q = DIR * s + NRM * w;
+        if (on_page(q, size)) {
+            return reverse(from_at(flip_uv(q / size, flip_x, flip_y)), 1.0);
         }
-        // Past the end of the folded-back sheet: the shot as it was, in the
-        // shadow of that end while it is near.
-        let edge = 2.0 * c + PI * r - 1.0;
-        var shade = 1.0;
-        if (edge < c) {
-            shade = 1.0 - 0.3 * exp(-(edge - x) / 0.06);
-        }
-        let flat_shot = from_at(on_frame(x, v, mirrored));
-        return vec4<f32>(flat_shot.rgb * shade, flat_shot.a);
+        // Not under the folded-back sheet: the shot as it was, in the
+        // shadow of the sheet's edge while that is near.
+        let hang = hangs(t + 0.02 * size.y, w, c, r, size)
+            + hangs(t + 0.05 * size.y, w, c, r, size)
+            + hangs(t + 0.09 * size.y, w, c, r, size);
+        let flat_shot = from_at(uv);
+        return vec4<f32>(flat_shot.rgb * (1.0 - 0.12 * hang), flat_shot.a);
     }
 
     // On the roll: the reverse over the crest, the face under it.
-    if (x <= c + r) {
-        let q = clamp((x - c) / r, 0.0, 1.0);
-        let turn = asin(q);
-        let s_reverse = c + r * (PI - turn);
-        if (s_reverse <= 1.0) {
-            return reverse(from_at(on_frame(s_reverse, v, mirrored)), mix(1.0, 0.55, q));
+    if (t <= c + r) {
+        let q01 = clamp((t - c) / r, 0.0, 1.0);
+        let turn = asin(q01);
+        let q_reverse = DIR * (c + r * (PI - turn)) + NRM * w;
+        if (on_page(q_reverse, size)) {
+            let print = from_at(flip_uv(q_reverse / size, flip_x, flip_y));
+            return reverse(print, mix(1.0, 0.55, q01));
         }
-        let s_face = c + r * turn;
-        if (s_face <= 1.0) {
-            let face = from_at(on_frame(s_face, v, mirrored));
-            return vec4<f32>(face.rgb * mix(1.0, 0.6, q), face.a);
+        let q_face = DIR * (c + r * turn) + NRM * w;
+        if (on_page(q_face, size)) {
+            let face = from_at(flip_uv(q_face / size, flip_x, flip_y));
+            return vec4<f32>(face.rgb * mix(1.0, 0.6, q01), face.a);
         }
     }
 
     // Beyond the roll: the next shot, shaded where the sheet hangs over it.
-    let gap = max(x - (c + r), 0.0);
-    let shade = 1.0 - 0.35 * exp(-gap / (0.7 * r + 0.03)) * min(p * 8.0, 1.0);
+    let gap = max(t - (c + r), 0.0);
+    let shade = 1.0 - 0.35 * exp(-gap / (0.7 * r + 0.03 * size.y)) * min(p * 8.0, 1.0);
     let next = to_at(uv);
     return vec4<f32>(next.rgb * shade, next.a);
 }

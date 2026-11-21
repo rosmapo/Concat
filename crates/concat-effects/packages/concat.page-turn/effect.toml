@@ -7,17 +7,17 @@ kind = "transition"
 category = "Slide"
 order = 18
 aliases = ["page", "page-curl", "book"]
-description = "The last shot is a page curling over from the edge like a page of a book, its back showing through and a soft shadow on the next shot beneath."
+description = "The last shot is a sheet peeled back from a corner like the page of a book, its reverse showing the picture faintly through the paper and a soft shadow on the next shot beneath."
 
 [[param]]
-key = "direction"
-label = "Direction"
+key = "corner"
+label = "Corner"
 type = "enum"
-values = [0, 1]
-labels = ["From the right", "From the left"]
+values = [0, 1, 2, 3]
+labels = ["Bottom right", "Top right", "Bottom left", "Top left"]
 default = 0
 min = 0
-max = 1
+max = 3
 
 [[param]]
 key = "curl"
