@@ -826,10 +826,6 @@ pub struct Models {
     pub voice_styles: Rc<VecModel<crate::ui::VoiceCardData>>,
     pub transcribers: Rc<VecModel<ModelData>>,
     pub voices: Rc<VecModel<ModelData>>,
-    /// The Version page's releases, and beside each its day or that it
-    /// is this one.
-    pub versions: Rc<VecModel<SharedString>>,
-    pub version_details: Rc<VecModel<SharedString>>,
     pub seats: Rc<VecModel<SeatBox>>,
     pub dividers: Rc<VecModel<DockDivider>>,
     pub recents: Rc<VecModel<RecentProjectData>>,
@@ -911,8 +907,6 @@ impl Models {
             voice_styles: Rc::new(VecModel::default()),
             transcribers: Rc::new(VecModel::default()),
             voices: Rc::new(VecModel::default()),
-            versions: Rc::new(VecModel::default()),
-            version_details: Rc::new(VecModel::default()),
             seats: Rc::new(VecModel::default()),
             dividers: Rc::new(VecModel::default()),
             recents: Rc::new(VecModel::default()),

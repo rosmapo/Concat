@@ -2047,8 +2047,6 @@ impl Studio {
         );
         sync(&models.transcribers, self.settings.transcriber_rows());
         sync(&models.voices, self.settings.voice_rows());
-        sync(&models.versions, self.settings.version_rows());
-        sync(&models.version_details, self.settings.version_details());
         set_changed(
             app.get_relink(),
             self.relink.data(self),

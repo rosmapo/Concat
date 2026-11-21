@@ -1807,11 +1807,6 @@ component WideHome inherits Rectangle {
 
         property <int> verbs: root.capcut ? 3 : 2;
         property <length> verbs-h: self.verbs * 44px + (self.verbs - 1) * 8px;
-        property <length> links-h: Links.desk.length * 34px;
-        property <length> news-h: 156px;
-        /// The news card is the one thing here a short window can do
-        /// without: the verbs and the links keep their room first.
-        property <bool> news: self.height >= self.verbs-h + self.links-h + self.news-h + 64px;
 
         VerticalLayout {
             padding: 12px;
@@ -1840,23 +1835,6 @@ component WideHome inherits Rectangle {
             }
 
             Rectangle { vertical-stretch: 1; }
-
-            if side.news: NewsCard {
-                height: side.news-h;
-                small: true;
-                title: I18n.t1("start.whatsNew", root.version);
-                note: I18n.t("start.newsNote");
-                clicked => { root.link("news"); }
-            }
-
-            VerticalLayout {
-                padding-top: 4px;
-
-                for item in Links.desk: SideLink {
-                    item: item;
-                    clicked => { root.link(item.name); }
-                }
-            }
         }
     }
 
@@ -2153,36 +2131,6 @@ component NarrowHome inherits Rectangle {
                 enabled: !root.busy;
                 opened => { root.open-recent(project.path); }
                 forgotten => { root.forget-recent(project.path); }
-            }
-
-            Rectangle { height: 32px; }
-
-            NewsCard {
-                height: 150px;
-                compact: true;
-                title: I18n.t1("start.whatsNew", root.version);
-                note: I18n.t("start.newsNote");
-                clicked => { root.link("news"); }
-            }
-
-            Rectangle { height: 12px; }
-
-            // The page's links, as the sidebar's foot has them on a desk:
-            // one line each, on one surface.
-            Rectangle {
-                border-radius: Theme.r-lg;
-                background: Theme.launch-panel;
-                height: list.preferred-height;
-
-                list := VerticalLayout {
-                    padding: 6px;
-
-                    for item in (root.phone ? Links.phone : Links.desk): SideLink {
-                        height: 44px;
-                        item: item;
-                        clicked => { root.link(item.name); }
-                    }
-                }
             }
         }
     }
