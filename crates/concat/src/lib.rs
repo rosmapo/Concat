@@ -8,9 +8,8 @@
 //! in [`studio`]. The state reads the engine's project and writes commands
 //! to it; nothing here decides what an edit means.
 //!
-//! A library so that every entry point is a few lines: `main.rs` on the
-//! desktop and on iOS, and the `concat-android` activity on Android. Each
-//! one calls [`run`].
+//! A library so that every entry point is a few lines: `main.rs` is
+//! the entry point and calls [`run`].
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -40,9 +39,6 @@ mod gpu;
 mod grading;
 mod host;
 mod i18n;
-/// The iPhone's pickers and its way to Photos; see the module.
-#[cfg(target_os = "ios")]
-mod ios;
 mod keymap;
 mod meters;
 mod motion_tiles;
@@ -265,12 +261,6 @@ pub(crate) fn close_window(
 const IDLE_FRAMES: usize = 96 * 1024 * 1024;
 
 fn start(project: Option<std::path::PathBuf>, smoke: Smoke) -> Result<(), slint::PlatformError> {
-    // What Import and a finished export reach on an iPhone. Android's own
-    // crate installs its; iOS runs this crate's binary, so it is here.
-    // https://github.com/jub0t/Concat/issues/332
-    #[cfg(target_os = "ios")]
-    ios::install();
-
     // The interface scale: a percent of the display's own, applied once
     // the window is up and kept through moves between monitors; see
     // `platform::apply_ui_scale`. https://github.com/jub0t/Concat/issues/320
