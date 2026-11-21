@@ -1,0 +1,32 @@
+format = 2
+
+[effect]
+id = "concat.page-turn"
+name = "Page Turn"
+kind = "transition"
+category = "Slide"
+order = 18
+aliases = ["page", "page curl", "book"]
+description = "The last shot is a page curling over from the edge like a page of a book, its back showing through and a soft shadow on the next shot beneath."
+
+[[param]]
+key = "direction"
+label = "Direction"
+type = "enum"
+values = [0, 1]
+labels = ["From the right", "From the left"]
+default = 0
+min = 0
+max = 1
+
+[[param]]
+key = "curl"
+label = "Curl"
+min = 0.05
+max = 0.25
+step = 0.01
+default = 0.12
+
+[transition]
+fallback = "cross-fade"
+entry = "effect.wgsl"
